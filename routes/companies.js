@@ -18,7 +18,7 @@ router.get("/", async function (req, res, next) {
 });
 
 /** GET /[code] - return data about one company:
- * `{company: {code, name, description, invoices:[id, ...]}}` */
+ * `{company: {code, name, description, invoices:[id, ...], industries: [...]}}` */
 
 router.get("/:code", async function (req, res, next) {
   try {
@@ -34,11 +34,21 @@ router.get("/:code", async function (req, res, next) {
       throw notFoundError;
     }
     const result = companyQuery.rows[0];
+
     const invoiceQuery = await db.query(
       "SELECT id FROM invoices WHERE comp_code = $1",
       [result.code]
     );
     result.invoices = invoiceQuery.rows.map((r) => r.id);
+
+    const industryQuery = await db.query(
+      `SELECT i.name FROM industries AS i
+        JOIN industries_companies AS ic
+          ON i.id = ic.industry_id
+        WHERE ic.company_code = $1`,
+      [req.params.code]
+    );
+    result.industries = industryQuery.rows.map((r) => r.name);
     return res.json({ company: result });
   } catch (err) {
     return next(err);
@@ -81,7 +91,7 @@ router.put("/:code", async function (req, res, next) {
 
     if (result.rows.length === 0) {
       throw new ExpressError(
-        `There is no company with id of '${req.params.code}`,
+        `There is no company with code of '${req.params.code}`,
         404
       );
     }
