@@ -89,7 +89,7 @@ router.put("/:id", async function (req, res, next) {
       );
     }
 
-    return res.json({ company: result.rows[0] });
+    return res.json({ invoice: result.rows[0] });
   } catch (err) {
     return next(err);
   }

@@ -16,12 +16,13 @@ router.get("/", async function (req, res, next) {
   }
 });
 
-/** GET /[code] - return data about one company: `{company: {code, name, description}}` */
+/** GET /[code] - return data about one company:
+ * `{company: {code, name, description, invoices:[id, ...]}}` */
 
 router.get("/:code", async function (req, res, next) {
   try {
     const companyQuery = await db.query(
-      "SELECT * FROM companies WHERE code = $1",
+      "SELECT code, name, description FROM companies WHERE code = $1",
       [req.params.code]
     );
     if (companyQuery.rows.length === 0) {
@@ -33,10 +34,10 @@ router.get("/:code", async function (req, res, next) {
     }
     const result = companyQuery.rows[0];
     const invoiceQuery = await db.query(
-      "SELECT * FROM invoices WHERE comp_code = $1",
+      "SELECT id FROM invoices WHERE comp_code = $1",
       [result.code]
     );
-    result.invoices = invoiceQuery.rows;
+    result.invoices = invoiceQuery.rows.map((r) => r.id);
     return res.json({ company: result });
   } catch (err) {
     return next(err);
@@ -59,7 +60,7 @@ router.post("/", async function (req, res, next) {
   }
 });
 
-/** PATCH /[code] - update fields in company; return `{company: code, name, description}` */
+/** PUT /[code] - update fields in company; return `{company: code, name, description}` */
 
 router.put("/:code", async function (req, res, next) {
   try {
