@@ -50,15 +50,29 @@ router.post("/", async function (req, res, next) {
 
 router.put("/:id", async function (req, res, next) {
   try {
+    const industry = await db.query(
+      `SELECT id FROM industries
+      WHERE id = $1`,
+      [req.params.id]
+    );
+    if (industry.rows.length === 0) {
+      throw new ExpressError(`Industry id does not exist`, 404);
+    }
+
+    const company = await db.query(
+      `SELECT code FROM companies
+      WHERE code = $1`,
+      [req.body.code]
+    );
+    if (company.rows.length === 0) {
+      throw new ExpressError(`Company code does not exist`, 404);
+    }
+
     const association = await db.query(
       `INSERT INTO industries_companies (industry_id, company_code)
       VALUES ($1, $2) RETURNING (industry_id, company_code)`,
       [req.params.id, req.body.code]
     );
-
-    if (association.rows.length === 0) {
-      throw new ExpressError(`Error in industry id or comapny code`, 404);
-    }
 
     const ICQuery = await db.query(
       `SELECT i.id, i.name, ic.company_code 

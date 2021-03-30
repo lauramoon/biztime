@@ -1,3 +1,5 @@
+// tests for companies routes
+
 // connect to right DB --- set before loading db.js
 process.env.NODE_ENV = "test";
 
@@ -8,7 +10,7 @@ const request = require("supertest");
 const app = require("../app");
 const db = require("../db");
 
-let testCompany, testInvoice;
+let testCompany, testInvoice, testIndustry;
 
 beforeEach(async function () {
   const resultCompanies = await db.query(`
@@ -22,6 +24,15 @@ beforeEach(async function () {
       VALUES ('TestCode', 300)
       RETURNING id, comp_code, amt, paid, add_date, paid_date`);
   testInvoice = resultInvoice.rows[0];
+  const resultIndustry = await db.query(
+    `INSERT INTO industries (name) VALUES ('TestIndustry')
+    RETURNING id, name`
+  );
+  testIndustry = resultIndustry.rows[0];
+  await db.query(`
+    INSERT INTO 
+      industries_companies (industry_id, company_code)
+      VALUES (${testIndustry.id}, 'TestCode')`);
 });
 
 /** GET / - returns `{companies: [{code, name}, ...]}` */
@@ -38,10 +49,11 @@ describe("GET /companies", function () {
 
 /** GET /[code] - return data about one company: `{company: {code, name, description}}` */
 
-describe("GET /companies[code]", function () {
+describe("GET /companies/[code]", function () {
   test("Gets data for one company", async function () {
     const response = await request(app).get(`/companies/${testCompany.code}`);
     testCompany.invoices = [testInvoice.id];
+    testCompany.industries = [testIndustry.name];
     expect(response.statusCode).toEqual(200);
     expect(response.body).toEqual({
       company: testCompany,
@@ -129,6 +141,7 @@ afterEach(async function () {
   // delete any data created by test
   await db.query("DELETE FROM companies");
   await db.query("DELETE FROM invoices");
+  await db.query("DELETE FROM industries");
 });
 
 afterAll(async function () {
