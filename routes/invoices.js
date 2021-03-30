@@ -74,13 +74,25 @@ router.put("/:id", async function (req, res, next) {
       throw new ExpressError("Not allowed", 400);
     }
 
-    const result = await db.query(
-      `UPDATE invoices 
-               SET amt=$1, paid=true, paid_date=CURRENT_DATE
-               WHERE id = $2
-               RETURNING id, comp_code, amt, paid, add_date, paid_date`,
-      [req.body.amt, req.params.id]
-    );
+    let result;
+
+    if (req.body.paid) {
+      result = await db.query(
+        `UPDATE invoices 
+                 SET amt=$1, paid=true, paid_date=CURRENT_DATE
+                 WHERE id = $2
+                 RETURNING id, comp_code, amt, paid, add_date, paid_date`,
+        [req.body.amt, req.params.id]
+      );
+    } else {
+      result = await db.query(
+        `UPDATE invoices 
+                 SET amt=$1, paid=true, paid_date=NULL
+                 WHERE id = $2
+                 RETURNING id, comp_code, amt, paid, add_date, paid_date`,
+        [req.body.amt, req.params.id]
+      );
+    }
 
     if (result.rows.length === 0) {
       throw new ExpressError(

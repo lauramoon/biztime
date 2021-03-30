@@ -85,15 +85,16 @@ describe("POST /invoices", function () {
   });
 });
 
-/** PUT /[id] - update amount field in invoice given {amt},
+/** PUT /[id] - update amount field in invoice and whether paid given {amt, paid},
  * return `{invoice: {id, comp_code, amt ...}}` */
 
 describe("PUT /invoices/:id", function () {
-  test("Updates a single invoice", async function () {
+  test("Updates one invoice to paid", async function () {
     const response = await request(app)
       .put(`/invoices/${testInvoice.id}`)
       .send({
         amt: 325,
+        paid: true,
       });
     expect(response.statusCode).toEqual(200);
     expect(response.body).toEqual({
@@ -104,6 +105,26 @@ describe("PUT /invoices/:id", function () {
         paid: true,
         add_date: expect.any(String),
         paid_date: expect.any(String),
+      },
+    });
+  });
+
+  test("Updates one invoice to not paid", async function () {
+    const response = await request(app)
+      .put(`/invoices/${testInvoice.id}`)
+      .send({
+        amt: 325,
+        paid: false,
+      });
+    expect(response.statusCode).toEqual(200);
+    expect(response.body).toEqual({
+      invoice: {
+        id: testInvoice.id,
+        comp_code: testInvoice.comp_code,
+        amt: 325,
+        paid: true,
+        add_date: expect.any(String),
+        paid_date: null,
       },
     });
   });
