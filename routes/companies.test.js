@@ -58,23 +58,21 @@ describe("GET /companies[code]", function () {
 describe("POST /companies", function () {
   test("Creates a new company", async function () {
     const response = await request(app).post(`/companies`).send({
-      code: "msft",
-      name: "Microsoft",
-      description: "not Google or Apple",
+      name: "Yahoo!",
+      description: "once upon a time",
     });
     expect(response.statusCode).toEqual(201);
     expect(response.body).toEqual({
       company: {
-        code: "msft",
-        name: "Microsoft",
-        description: "not Google or Apple",
+        code: "yahoo",
+        name: "Yahoo!",
+        description: "once upon a time",
       },
     });
   });
 
   test("Responds with 500 if incomplete data provided", async function () {
     const response = await request(app).post(`/companies`).send({
-      name: "Troll",
       description: "This is not a test",
     });
     expect(response.statusCode).toEqual(500);

@@ -1,6 +1,7 @@
 /** Routes for companies. */
 
 const express = require("express");
+const slugify = require("slugify");
 const router = new express.Router();
 const db = require("../db");
 const ExpressError = require("../expressError");
@@ -44,15 +45,17 @@ router.get("/:code", async function (req, res, next) {
   }
 });
 
-/** POST / - create company from data; return `{company: code, name, description}` */
+/** POST / - create company from name and description;
+ * return `{company: code, name, description}` */
 
 router.post("/", async function (req, res, next) {
   try {
+    const new_code = slugify(req.body.name, { lower: true, strict: true });
     const result = await db.query(
       `INSERT INTO companies (code, name, description)
             VALUES ($1, $2, $3)
             RETURNING code, name, description`,
-      [req.body.code, req.body.name, req.body.description]
+      [new_code, req.body.name, req.body.description]
     );
     return res.status(201).json({ company: result.rows[0] });
   } catch (err) {
